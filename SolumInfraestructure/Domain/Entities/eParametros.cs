@@ -10,6 +10,7 @@ namespace SolumInfraestructure.Domain.Entities
         private string _hostgroupid;
         private string _sociedad;
         private string _cliente;
+        private string _nombre;
         private string _proceso;
         private int _tipo;
         private int? _hora;
@@ -31,10 +32,11 @@ namespace SolumInfraestructure.Domain.Entities
         private DateTime? _ultimoproceso;
         private string? _mensaje;
         private string? _usuario;
-        public int code{ get => _code; set => _code= value; }
+        public int code { get => _code; set => _code = value; }
         public string hostgroupid { get => _hostgroupid; set => _hostgroupid = value; }
         public string sociedad { get => _sociedad; set => _sociedad = value; }
         public string cliente { get => _cliente; set => _cliente = value; }
+        public string nombre { get => _nombre; set => _nombre = value; }
         public string proceso { get => _proceso; set => _proceso = value; }
         public int tipo { get => _tipo; set => _tipo = value; }
         public int? hora { get => _hora; set => _hora = value; }
@@ -50,11 +52,17 @@ namespace SolumInfraestructure.Domain.Entities
         public int? titulo { get => _titulo; set => _titulo = value; }
         public int? datos { get => _datos; set => _datos = value; }
         public string? fechainicio { get => _fechainicio; set => _fechainicio = value; }
-        public string? fechafin { get => _fechafin; set => _fechafin= value; }
+        public string? fechafin { get => _fechafin; set => _fechafin = value; }
         public int modo { get => _modo; set => _modo = value; }
-        public bool ejecutar { get => _ejecutar; set => _ejecutar = value;}
-        public DateTime? ultimoproceso { get => _ultimoproceso; set  => _ultimoproceso = value;}
+        public bool ejecutar { get => _ejecutar; set => _ejecutar = value; }
+        public DateTime? ultimoproceso { get => _ultimoproceso; set => _ultimoproceso = value; }
         public string? mensaje { get => _mensaje; set => _mensaje = value; }
         public string? usuario { get => _usuario; set => _usuario = value; }
+    }
+    public class eCliente{
+        private string _sociedad;
+        private string _nombre;
+        public string sociedad { get => _sociedad; set => _sociedad = value; }
+        public string nombre { get => _nombre; set => _nombre = value; }
     }
 }

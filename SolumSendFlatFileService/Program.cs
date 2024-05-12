@@ -2,13 +2,13 @@
 using SolumInfraestructure.Service;
 using SolumInfraestructure.Domain.Entities;
 
-namespace SolumKardexService
+namespace SolumSendFlatFileService
 {
     public class Program
     {
         public void Servicio() {
-            Console.WriteLine("Iniciando servicio de kardex");
-            KardexService obj = new KardexService();
+            Console.WriteLine("Iniciando servicio de actualización de archivos en SAP");
+            SendFlatFileService obj = new SendFlatFileService();
             try
             {
                 obj.ejecucion();

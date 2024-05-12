@@ -42,7 +42,7 @@ namespace SolumInfraestructure.Domain.DBContext
                     }
                     else
                     {
-                        Console.WriteLine("Entro a configuracion [@EX_PROCESO]!!: " + parametros.proceso + "");
+                        //Console.WriteLine("PROCESO: [" + parametros.proceso + "] TIENE UNA CONFIGURACION EN EL SISTEMA");
                         return true;
                     }
                 }
@@ -106,13 +106,13 @@ namespace SolumInfraestructure.Domain.DBContext
         {
             var eFileListDetail = new List<eFile>();
             using (SqlConnection conn = new SqlConnection(cnxStringCRM))
-            using (SqlCommand cmd = new SqlCommand("select Prefix,Extent,Separator,Destino,[Order] from [@EX_FILE] where U_EX_RUTA = " + ruta.Code + " and state = 0 order by [Order]", conn))
+            using (SqlCommand cmd = new SqlCommand("select Prefix,Extent,Separator,Destino,[Order],Type,SAttribute from [@EX_FILE] where U_EX_RUTA = " + ruta.Code + " and state = 0 order by [Order]", conn))
             {
                 SqlDataReader rd = null;
                 cmd.CommandType = CommandType.Text;
                 conn.Open();
                 int i = 0;
-                Console.WriteLine("Entrando a obtener archivo");
+                //Console.WriteLine("Entrando a obtener archivo");
                 try
                 {
                     rd = cmd.ExecuteReader();
@@ -125,9 +125,11 @@ namespace SolumInfraestructure.Domain.DBContext
                         eFileDetail.Extent = rd.GetValue(1).ToString();
                         eFileDetail.Separator = rd.GetValue(2).ToString();
                         eFileDetail.Destino = rd.GetValue(3).ToString();
-                        eFileDetail.Ordenamiento = rd.GetValue(4).ToString();
+                        eFileDetail.Ordenamiento = rd.GetValue(4) != DBNull.Value ? rd.GetValue(4).ToString() : null;
+                        eFileDetail.Type = rd.GetValue(5) != DBNull.Value ? int.Parse(rd.GetValue(5).ToString()) : null;
+                        eFileDetail.SAttribute = rd.GetValue(6) != DBNull.Value ? rd.GetValue(6).ToString() : null;
                         eFileListDetail.Add(eFileDetail);
-                        Console.WriteLine("Archivo " + eFileDetail.Prefix);
+                        //Console.WriteLine("Archivo origen: " + eFileDetail.Prefix + " Archivo destino: " + eFileDetail.Destino);
                     }
                     rd.Close();
                     conn.Close();
@@ -143,13 +145,16 @@ namespace SolumInfraestructure.Domain.DBContext
         public List<eParametros> cargar_parametros() {
             var eFileListDetail = new List<eParametros>();
             using (SqlConnection conn = new SqlConnection(cnxStringCRM))
-            using (SqlCommand cmd = new SqlCommand("select Code,U_EX_CLIENTE,U_EX_PROCESO,tipo,hora,minuto,lunes,martes,miercoles,jueves,viernes,sabado,domingo,modalidad,titulo,datos,format(fechainicio,'yyyy-MM-dd') fechainicio,format(fechafin,'yyyy-MM-dd') fechafin,ultimoproceso from [@EX_PLANIFICADO] where state = 0 order by [Code]", conn))
+            using (SqlCommand cmd = new SqlCommand("select Code,U_EX_CLIENTE,U_EX_PROCESO,tipo,hora,minuto,lunes,martes,miercoles,jueves,viernes,sabado,domingo,modalidad,titulo,datos,format(fechainicio,'yyyy-MM-dd') fechainicio,format(fechafin,'yyyy-MM-dd') fechafin,ultimoproceso from [@EX_PLANIFICADO] where state = 0 and U_EX_PROCESO in ('SAP_UPDATE_DESPACHO','SAP_UPDATE_LIQUIDACION') order by [Code]", conn))
             {
                 SqlDataReader rd = null;
                 cmd.CommandType = CommandType.Text;
                 conn.Open();
                 int i = 0;
-                Console.WriteLine("Entrando a lista de planificados");
+                Console.WriteLine("*---------------------------------------------*");
+                Console.WriteLine("*ENTRANDO A LISTA DE PLANIFICADOS POR CLIENTE:*");
+                Console.WriteLine("*---------------------------------------------*");
+                Console.WriteLine("");
                 try
                 {
                     rd = cmd.ExecuteReader();
@@ -215,10 +220,13 @@ namespace SolumInfraestructure.Domain.DBContext
                             }
                         }
                         eFileListDetail.Add(eFileDetail);
-                        Console.WriteLine("Planificado del cliente: " + eFileDetail.cliente);
+                        eCliente eCliente = new eCliente();
+                        eCliente = cargar_company(eFileDetail);
+                        Console.WriteLine(i.ToString() + "- " + "CLIENTE: " + eFileDetail.cliente + " [" + eCliente.nombre + "] " +  "PROCESO: " + eFileDetail.proceso + " " + "SOCIEDAD: " + eCliente.sociedad);
                     }
                     rd.Close();
                     conn.Close();
+                    Console.WriteLine("");
                     return eFileListDetail;
                 }
                 finally
@@ -256,25 +264,27 @@ namespace SolumInfraestructure.Domain.DBContext
             }
             return validar;
         }
-        public string cargar_company(eParametros parametros)
+        public eCliente cargar_company(eParametros parametros)
         {
+            eCliente eCliente = new eCliente();
             using (SqlConnection conn = new SqlConnection(cnxStringCRM))
             using (SqlCommand cmd = new SqlCommand("select Code, Class, Name,Company from [@EX_CLIENTE] where state = 0 and code = '" + parametros.cliente + "'", conn))
             {
                 SqlDataReader rd = null;
                 cmd.CommandType = CommandType.Text;
                 conn.Open();
-                string Ccompany = null;
+                //string Ccompany = null;
                 try
                 {
                     rd = cmd.ExecuteReader();
                     while (rd.Read())
                     {
-                        Ccompany = rd.GetValue(3).ToString();
+                        eCliente.sociedad = rd.GetValue(3).ToString();
+                        eCliente.nombre = rd.GetValue(2).ToString();
                     }
                     rd.Close();
                     conn.Close() ;
-                    return Ccompany;
+                    return eCliente;
                 }
                 finally
                 {
@@ -283,16 +293,17 @@ namespace SolumInfraestructure.Domain.DBContext
                 }
             }
         }
-        public bool sendemail(eParametros objParametros, eRuta objRuta)
+        public bool sendemail(eParametros objParametros, eRuta objRuta,eResponse objResponse)
         {
             bool Resultado = false;
             if (objRuta.Email == true)
             {
                 /**/
-                Console.WriteLine("Iniciando proceso de envio de correo");
+                Console.WriteLine("CORREO:");
                 string pathToCertificateFile = ConfigurationManager.AppSettings["PathToCertificateFile"];
                 pathToCertificateFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + pathToCertificateFile;
                 /**/
+                System.Net.Mail.MailMessage mmsg = new System.Net.Mail.MailMessage();
                 using (SqlConnection conn = new SqlConnection(cnxStringCRM))
                 using (SqlCommand cmd = new SqlCommand("select Email,Password,Type from [@EX_CONTACT] where U_EX_RUTA = " + objRuta.Code + " and state = 0", conn))
                 {
@@ -303,14 +314,20 @@ namespace SolumInfraestructure.Domain.DBContext
                     System.Data.DataTable dtSap;
                     int i = 0;
                     int j = 0;
+                    int destinatarios = 0;
                     try
                     {
                         rd = cmd.ExecuteReader();
                         dtSap = new System.Data.DataTable() { TableName = "Contact" };
-                        System.Net.Mail.MailMessage mmsg = new System.Net.Mail.MailMessage();
                         System.Net.Mail.SmtpClient clienteC = new System.Net.Mail.SmtpClient();
                         //mmsg.Subject = "OPERADOR SOLUM: Envio de Interfaz de Kardex: (" + objParametros.proceso + ") - " + objRuta.Subject + " " + cargar_company(objParametros) + " " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        mmsg.Subject = "OPERADOR SOLUM: " + objRuta.Subject + " " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        if (objResponse.Tipo == "success")
+                        {
+                            mmsg.Subject = "OPERADOR SOLUM: " + objRuta.Subject + " " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + objParametros.nombre;
+                        }
+                        else {
+                            mmsg.Subject = "OPERADOR SOLUM: " + objRuta.Subject + " " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " (ERROR!!) " + objParametros.nombre; ;
+                        }
                         mmsg.SubjectEncoding = System.Text.Encoding.UTF8;
                         while (rd.Read())
                         {
@@ -332,75 +349,92 @@ namespace SolumInfraestructure.Domain.DBContext
                             else if (int.Parse(rd.GetValue(2).ToString()) == 1)
                             {
                                 mmsg.To.Add(rd.GetValue(0).ToString());
-                                Console.WriteLine("Usuario 1:" + rd.GetValue(0).ToString());
+                                Console.WriteLine("   Usuario 1:" + rd.GetValue(0).ToString());
+                                destinatarios++;
                             }
                             else if (int.Parse(rd.GetValue(2).ToString()) == 2)
                             {
                                 mmsg.CC.Add(rd.GetValue(0).ToString());
-                                Console.WriteLine("Usuario 2:" + rd.GetValue(0).ToString());
+                                Console.WriteLine("   Usuario 2:" + rd.GetValue(0).ToString());
+                                destinatarios++;
                             }
                             else if (int.Parse(rd.GetValue(2).ToString()) == 3)
                             {
                                 mmsg.Bcc.Add(rd.GetValue(0).ToString());
-                                Console.WriteLine("Usuario 3:" + rd.GetValue(0).ToString());
+                                Console.WriteLine("   Usuario 3:" + rd.GetValue(0).ToString());
+                                destinatarios++;
                             }
                         }
                         rd.Close();
                         conn.Close();
                         //Lista de interfaces
-                        using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State = 1", conn))
+                        if (destinatarios > 0)
                         {
-                            cmd_log.CommandTimeout = 300;
-                            conn.Open();
-                            rd_log = cmd_log.ExecuteReader();
-                            cmd_log.CommandType = CommandType.Text;
-                            string mensaje = null;
-                            while (rd_log.Read())
+                            using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State = 1", conn))
                             {
-                                //Environment.NewLine
-                                if (objRuta.Attached == true)
+                                cmd_log.CommandTimeout = 300;
+                                conn.Open();
+                                rd_log = cmd_log.ExecuteReader();
+                                cmd_log.CommandType = CommandType.Text;
+                                string mensaje = null;
+                                while (rd_log.Read())
                                 {
-                                    //mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + Environment.NewLine;
-                                    System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(0) + rd_log.GetString(1));
-                                    mmsg.Attachments.Add(attachment);
-                                    Console.WriteLine("Archivo adjunto");
+                                    //Environment.NewLine
+                                    if (objRuta.Attached == true)
+                                    {
+                                        //mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + Environment.NewLine;
+                                        System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(0) + rd_log.GetString(1));
+                                        mmsg.Attachments.Add(attachment);
+                                        Console.WriteLine("   Archivo adjunto");
+                                    }
                                 }
-                            }
-                            //
-                            mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha enviado con éxito";
-                            mmsg.BodyEncoding = System.Text.Encoding.UTF8;
-                            mmsg.IsBodyHtml = false;
-                            mmsg.Priority = System.Net.Mail.MailPriority.High;
+                                //
+                                if (objResponse.Tipo == "success")
+                                {
+                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con éxito" + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
+                                                                        Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
+                                }
+                                else if (objResponse.Tipo == "error") {
+                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con error" + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
+                                                                        Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
+                                }
+                                mmsg.BodyEncoding = System.Text.Encoding.UTF8;
+                                mmsg.IsBodyHtml = false;
+                                mmsg.Priority = System.Net.Mail.MailPriority.High;
 
-                            if (j == 1)
-                            {
-                                try
+                                if (j == 1)
                                 {
-                                    Console.WriteLine("Inicio de envio de correo");
-                                    clienteC.Send(mmsg);
-                                    Resultado = true;
-                                    Console.WriteLine("Correo enviado con éxito");
+                                    try
+                                    {
+                                        //Console.WriteLine("Inicio de envio de correo");
+                                        clienteC.Send(mmsg);
+                                        Resultado = true;
+                                        Console.WriteLine("   Correo enviado con éxito!!");
+                                    }
+                                    catch (System.Net.Mail.SmtpException ex)
+                                    {
+                                        //MessageBox.Show(ex.Message.ToString());
+                                        //Inscribir error
+                                        Resultado = false;
+                                    }
+                                    if (i == 0)
+                                    {
+                                        //MessageBox.Show("DESTINATARIOS no configurados o desactivados en proceso de INVENTORY");
+                                        //Inscribir error
+                                    }
                                 }
-                                catch (System.Net.Mail.SmtpException ex)
+                                else
                                 {
-                                    //MessageBox.Show(ex.Message.ToString());
+                                    //MessageBox.Show("Correo emisor no configurado en proceso INVENTORY");
                                     //Inscribir error
-                                    Resultado = false;
                                 }
-                                if (i == 0)
-                                {
-                                    //MessageBox.Show("DESTINATARIOS no configurados o desactivados en proceso de INVENTORY");
-                                    //Inscribir error
-                                }
+                                ////
+                                rd.Close();
+                                conn.Close();
                             }
-                            else
-                            {
-                                //MessageBox.Show("Correo emisor no configurado en proceso INVENTORY");
-                                //Inscribir error
-                            }
-                            ////
-                            rd.Close();
-                            conn.Close();
+                        }
+                        else {
+                            Console.WriteLine("NO HAY DESTINATARIOS INSCRITOS!!");
                         }
                     }
                     catch (Exception e)
@@ -413,9 +447,10 @@ namespace SolumInfraestructure.Domain.DBContext
             }
             return Resultado;
         }
-        public bool RegistraEvento(eParametros objParametros, string fileName, string referencia, int status, string messageSystem, string message)
+        public eResponse RegistraEvento(eParametros objParametros, string fileName, string referencia, int status, string messageSystem, string message)
         {
-            bool Resultado = false;
+            //bool Resultado = false;
+            eResponse Resultado = new eResponse();
             try
             {
                 using (SqlConnection conn = new SqlConnection(cnxStringCRM))
@@ -431,20 +466,30 @@ namespace SolumInfraestructure.Domain.DBContext
                     cmd.Parameters.Add("@MessageSystem", SqlDbType.VarChar).Value = messageSystem == null ? System.Data.SqlTypes.SqlString.Null : messageSystem;
                     cmd.Parameters.Add("@Message", SqlDbType.VarChar).Value = message == null ? System.Data.SqlTypes.SqlString.Null : message;
                     conn.Open();
-                    cmd.ExecuteNonQuery();
-                    Resultado = true;
-                    conn.Close();
+                    SqlDataReader rd = null;
+                    rd = cmd.ExecuteReader();
+                    while (rd.Read())
+                    {
+                        Resultado.Tipo = "success";
+                        Resultado.Titulo = "Correcto";
+                        Resultado.Mensaje = "Registro correcto de LOG";
+                        Resultado.Notificar = true;
+                    }
                 }
             }
             catch (Exception e)
             {
-                throw new Exception(e.ToString());
+                Resultado.Tipo = "error";
+                Resultado.Titulo = "Aviso";
+                Resultado.Mensaje = "Registro incorrecto de LOG";
+                Resultado.Notificar = true;
             }
             return Resultado;
         }
-        public bool ultimoproceso(eParametros objParametros)
+        public eResponse ultimoproceso(eParametros objParametros)
         {
-            bool Resultado = false;
+            //bool Resultado = false;
+            eResponse Resultado = new eResponse();
             objParametros.usuario = Environment.UserName;
             try
             {
@@ -458,8 +503,16 @@ namespace SolumInfraestructure.Domain.DBContext
                     cmd.Parameters.Add("@Hostgroupid", SqlDbType.VarChar).Value = objParametros.hostgroupid; ;
                     cmd.Parameters.Add("@usuario", SqlDbType.VarChar).Value = objParametros.usuario; ;
                     conn.Open();
-                    cmd.ExecuteNonQuery();
-                    Resultado = true;
+                    SqlDataReader rd = null;
+                    rd = cmd.ExecuteReader();
+                    while (rd.Read())
+                    {
+                        Resultado.Tipo = rd.GetValue("tipo").ToString();
+                        Resultado.Titulo = rd.GetValue("titulo").ToString();
+                        Resultado.Mensaje = rd.GetValue("mensaje").ToString();
+                        Resultado.Notificar = false;
+                    }
+                    rd.Close();
                     conn.Close();
                 }
             }
@@ -468,6 +521,73 @@ namespace SolumInfraestructure.Domain.DBContext
                 throw new Exception(e.ToString());
             }
             return Resultado;
+        }
+        public eResponse EjecutarScriptRetorno(string strSql)
+        {
+            //try
+            //{
+            eResponse obj = new eResponse();
+            using (SqlConnection conn = new SqlConnection(cnxStringCRM))
+            using (SqlCommand cmd = new SqlCommand(strSql, conn))
+            {
+                conn.Open();
+                cmd.CommandTimeout = 1000;
+                SqlDataReader rd = null;
+                rd = cmd.ExecuteReader();
+                while (rd.Read())
+                {
+                    obj.Tipo = rd.GetValue("tipo").ToString();
+                    obj.Titulo = rd.GetValue("titulo").ToString();
+                    obj.Mensaje = rd.GetValue("mensaje").ToString();
+                    obj.Notificar = true;
+                }
+                rd.Close();
+                conn.Close();
+            }
+            return obj;
+            //return null;
+            //}
+            //catch (Exception e)
+            //{
+            //    //System.Console.WriteLine(e);
+            //    return e.Message.ToString();
+            //}
+        }
+        public eResponse ProcesarDataMasiva(DataTable dataTable, eFile objFile)
+        {
+            eResponse eResponseSql = new eResponse(); 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(cnxStringCRM))
+                {
+                    connection.Open();
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
+                    {
+                        bulkCopy.DestinationTableName = objFile.Destino;
+
+                        // Mapea las columnas del DataTable a las columnas de la tabla
+                        foreach (DataColumn column in dataTable.Columns)
+                        {
+                            bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
+                        }
+
+                        // Carga los datos en la tabla
+                        bulkCopy.WriteToServer(dataTable);
+                    }
+                }
+
+                //Console.WriteLine("Datos cargados exitosamente.");
+                eResponseSql.Tipo = "success";
+                eResponseSql.Mensaje = "REGISTRO CORRECTO DE CARGA MASIVA.";
+                return eResponseSql;
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine("Error al cargar los datos: " + ex.Message);
+                eResponseSql.Tipo = "error";
+                eResponseSql.Mensaje = "REGISTO INCORRECTO. " +  ex.Message;
+                return eResponseSql;
+            }
         }
         public eModelo cargar_modelo(eRuta ruta)
         {
@@ -479,7 +599,7 @@ namespace SolumInfraestructure.Domain.DBContext
                 cmd.CommandType = CommandType.Text;
                 conn.Open();
                 int i = 0;
-                Console.WriteLine("Entrando a obtener archivo");
+                Console.WriteLine(" a obtener archivo");
                 try
                 {
                     rd = cmd.ExecuteReader();

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace SolumKardexServiceMulticliente
+namespace SolumSendFlatFileServiceMulticliente
 {
     public class Worker : BackgroundService
     {
@@ -21,7 +21,7 @@ namespace SolumKardexServiceMulticliente
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                SolumKardexService.Program Tracking = new SolumKardexService.Program();
+                SolumSendFlatFileService.Program Tracking = new SolumSendFlatFileService.Program();
                 Tracking.Servicio();
                 _logger.LogInformation($"{nameof(ExecuteAsync)} running at: {DateTimeOffset.Now}");
                 await Task.Delay(1000, stoppingToken);

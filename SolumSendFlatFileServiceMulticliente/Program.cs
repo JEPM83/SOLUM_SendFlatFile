@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
 
-namespace SolumKardexServiceMulticliente
+namespace SolumSendFlatFileServiceMulticliente
 {
     public class Program
     {
@@ -25,8 +25,8 @@ namespace SolumKardexServiceMulticliente
                     services.AddHostedService<Worker>()
                     .Configure<EventLogSettings>(config => 
                     { 
-                            config.LogName = "ServicioKardexMulticliente"; 
-                            config.SourceName = "Servicio Kardex Multicliente"; 
+                            config.LogName = "ServicioSendFlatFileMulticliente"; 
+                            config.SourceName = "Servicio SendFlatFile Multicliente"; 
                     });
                 });
     }
