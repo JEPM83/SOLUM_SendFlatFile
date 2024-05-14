@@ -215,6 +215,7 @@ insert into "@EX_CONTACT" (Code,U_EX_RUTA,Email,Password,Type,State) values(450,
 --select * from SAP_HOST_LIQUIDACION
 --truncate table SAP_HOST_DESPACHO
 --truncate table SAP_HOST_LIQUIDACION
+--drop table SAP_HOST_LIQUIDACION
 create table SAP_HOST_DESPACHO(
 	Code int identity(1,1) not null,
 	Sociedad nvarchar(100) not null,
@@ -263,7 +264,33 @@ create table SAP_HOST_LIQUIDACION(
 	U_BZ_TCKFELQ nvarchar(300) null,
 	U_BZ_TCKHOLQ nvarchar(300) null,
 	U_SL_FECHENVOF nvarchar(300) null,
-	U_BZ_ISC nvarchar(300) null
+	U_BZ_ISC nvarchar(300) null,
+	--
+	DocEntrySAP nvarchar(300) null,
+	U_BZ_CARGA nvarchar(300) null,
+	U_BZ_TIPOVEH nvarchar(300) null,
+	U_BZ_SECPEDIDO nvarchar(300) null,
+	U_SYP_LUGAR_CARGA nvarchar(300) null,
+	U_BZ_NAVE nvarchar(300) null,
+	U_SYP_Ruta nvarchar(300) null,
+	U_BZ_PLACA nvarchar(300) null,
+	U_SL_RUCTRANSPORTISTA nvarchar(300) null,
+	U_BZ_TRANSPORTISTA nvarchar(300) null,
+	U_BPP_MDFN nvarchar(300) null,
+	U_BC_ApeCond nvarchar(300) null,
+	U_BC_NroDocConduc nvarchar(300) null,
+	U_BPP_MDFC nvarchar(300) null,
+	U_BC_TipoDocCond nvarchar(300) null,
+	U_BC_TipoDocTransp nvarchar(300) null,
+	U_tipoTransporte nvarchar(300) null,
+	U_BZ_RESGUARDO nvarchar(300) null,
+	U_BC_CHEKPACKING nvarchar(300) null,
+	U_BZ_HICITA nvarchar(300) null,
+	U_BZ_HFCITA nvarchar(300) null,
+	U_TIPO_DESPA nvarchar(300) null
+	--U_BZ_FCHEMB nvarchar(300) null,
+	--U_BZ_FFINAL nvarchar(300) null,
+	--U_SC_HORAS_ADIC nvarchar(300) null
 )
 CREATE TABLE [dbo].[@EX_PLANIFICADO](
 	[Code] [int] identity(1,1) NOT NULL,
@@ -339,48 +366,62 @@ begin try
 	begin transaction POST_Update_ORDR_Despacho
 	if @Sociedad = 'SBO_SOLUM_BC'
 	begin
-		update ZZ_SOLUM_2804.dbo.ORDR set 
-		U_BZ_CARGA = case when isnull(t1.U_BZ_CARGA,'')<>'' then t1.U_BZ_CARGA end,
-		U_BZ_TIPOVEH = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_SECPEDIDO = case when isnull(t1.U_BZ_SECPEDIDO,'')<>'' then t1.U_BZ_SECPEDIDO end,
-		U_SYP_LUGAR_CARGA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_NAVE = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_SYP_Ruta = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_PLACA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_SL_RUCTRANSPORTISTA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_TRANSPORTISTA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BPP_MDFN = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_ApeCond = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_NroDocConduc = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BPP_MDFC = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_TipoDocCond = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_TipoDocTransp = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_tipoTransporte = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_RESGUARDO = case when isnull(t1.U_BZ_RESGUARDO,'')<>'' then t1.U_BZ_RESGUARDO end
-		from ZZ_SOLUM_2804.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_DESPACHO t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
+		update SBO_SOLUM_BC.dbo.ORDR set 
+		U_BZ_CARGA = case when isnull(trim(t1.U_BZ_CARGA),'')<>'' then trim(t1.U_BZ_CARGA) end,
+		U_BZ_TIPOVEH = case when isnull(trim(t1.U_BZ_TIPOVEH),'')<>'' then trim(t1.U_BZ_TIPOVEH) end,
+		U_BZ_SECPEDIDO = case when isnull(trim(t1.U_BZ_SECPEDIDO),'')<>'' then trim(t1.U_BZ_SECPEDIDO) end,
+		U_SYP_LUGAR_CARGA = case when isnull(trim(t1.U_SYP_LUGAR_CARGA),'')<>'' then trim(t1.U_SYP_LUGAR_CARGA) end,
+		U_BZ_NAVE = case when isnull(trim(t1.U_BZ_NAVE),'')<>'' then trim(t1.U_BZ_NAVE) end,
+		U_SYP_Ruta = case when isnull(trim(t1.U_SYP_Ruta),'')<>'' then trim(t1.U_SYP_Ruta) end,
+		U_BZ_PLACA = case when isnull(trim(t1.U_BZ_PLACA),'')<>'' then trim(t1.U_BZ_PLACA) end,
+		U_SL_RUCTRANSPORTISTA = case when isnull(trim(t1.U_SL_RUCTRANSPORTISTA),'')<>'' then trim(t1.U_SL_RUCTRANSPORTISTA) end,
+		U_BZ_TRANSPORTISTA = case when isnull(trim(t1.U_BZ_TRANSPORTISTA),'')<>'' then trim(t1.U_BZ_TRANSPORTISTA) end,
+		U_BPP_MDFN = case when isnull(trim(t1.U_BPP_MDFN),'')<>'' then trim(t1.U_BPP_MDFN) end,
+		U_BC_ApeCond = case when isnull(trim(t1.U_BC_ApeCond),'')<>'' then trim(t1.U_BC_ApeCond) end,
+		U_BC_NroDocConduc = case when isnull(trim(t1.U_BC_NroDocConduc),'')<>'' then trim(t1.U_BC_NroDocConduc) end,
+		U_BPP_MDFC = case when isnull(trim(t1.U_BPP_MDFC),'')<>'' then trim(t1.U_BPP_MDFC) end,
+		U_BC_TipoDocCond = case when isnull(trim(t1.U_BC_TipoDocCond),'')<>'' then trim(t1.U_BC_TipoDocCond) end,
+		U_BC_TipoDocTransp = case when isnull(trim(t1.U_BC_TipoDocTransp),'')<>'' then trim(t1.U_BC_TipoDocTransp) end,
+		U_tipoTransporte = case when isnull(trim(t1.U_tipoTransporte),'')<>'' then trim(t1.U_tipoTransporte) end,
+		U_BZ_RESGUARDO = case when isnull(trim(t1.U_BZ_RESGUARDO),'')<>'' then trim(t1.U_BZ_RESGUARDO) end,
+		U_BC_CHEKPACKING = case when isnull(trim(t1.U_BC_CHEKPACKING),'')<>'' then trim(t1.U_BC_CHEKPACKING) end,
+		U_BZ_HICITA = case when isnull(trim(t1.U_BZ_HICITA),'')<>'' then trim(t1.U_BZ_HICITA) end,
+		U_BZ_HFCITA = case when isnull(trim(t1.U_BZ_HFCITA),'')<>'' then trim(t1.U_BZ_HFCITA) end,
+		U_TIPO_DESPA = case when isnull(trim(t1.U_TIPO_DESPA),'')<>'' then trim(t1.U_TIPO_DESPA) end,
+		U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then trim(t1.U_BZ_FCHEMB) end,
+		U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then trim(t1.U_BZ_FFINAL) end,
+		U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then trim(t1.U_SC_HORAS_ADIC) end
+		from SBO_SOLUM_BC.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_DESPACHO t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
 		where t1.Sociedad = @Sociedad and t1.HostGroupid = @Hostgroupid
 	end
 	else if @Sociedad = 'SBO_DERMO_BC'
 	begin
-		update ZZ_SOLUM_2804.dbo.ORDR set 
-		U_BZ_CARGA = case when isnull(t1.U_BZ_CARGA,'')<>'' then t1.U_BZ_CARGA end,
-		U_BZ_TIPOVEH = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_SECPEDIDO = case when isnull(t1.U_BZ_SECPEDIDO,'')<>'' then t1.U_BZ_SECPEDIDO end,
-		U_SYP_LUGAR_CARGA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_NAVE = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_SYP_Ruta = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_PLACA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_SL_RUCTRANSPORTISTA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_TRANSPORTISTA = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BPP_MDFN = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_ApeCond = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_NroDocConduc = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BPP_MDFC = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_TipoDocCond = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BC_TipoDocTransp = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_tipoTransporte = case when isnull(t1.U_BZ_TIPOVEH,'')<>'' then t1.U_BZ_TIPOVEH end,
-		U_BZ_RESGUARDO = case when isnull(t1.U_BZ_RESGUARDO,'')<>'' then t1.U_BZ_RESGUARDO end
-		from ZZ_SOLUM_2804.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_DESPACHO t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
+		update SBO_DERMO_BC.dbo.ORDR set 
+		U_BZ_CARGA = case when isnull(trim(t1.U_BZ_CARGA),'')<>'' then trim(t1.U_BZ_CARGA) end,
+		U_BZ_TIPOVEH = case when isnull(trim(t1.U_BZ_TIPOVEH),'')<>'' then trim(t1.U_BZ_TIPOVEH) end,
+		U_BZ_SECPEDIDO = case when isnull(trim(t1.U_BZ_SECPEDIDO),'')<>'' then trim(t1.U_BZ_SECPEDIDO) end,
+		U_SYP_LUGAR_CARGA = case when isnull(trim(t1.U_SYP_LUGAR_CARGA),'')<>'' then trim(t1.U_SYP_LUGAR_CARGA) end,
+		U_BZ_NAVE = case when isnull(trim(t1.U_BZ_NAVE),'')<>'' then trim(t1.U_BZ_NAVE) end,
+		U_SYP_Ruta = case when isnull(trim(t1.U_SYP_Ruta),'')<>'' then trim(t1.U_SYP_Ruta) end,
+		U_BZ_PLACA = case when isnull(trim(t1.U_BZ_PLACA),'')<>'' then trim(t1.U_BZ_PLACA) end,
+		--U_SL_RUCTRANSPORTISTA = case when isnull(trim(t1.U_SL_RUCTRANSPORTISTA),'')<>'' then t1.U_SL_RUCTRANSPORTISTA end,
+		U_BZ_TRANSPORTISTA = case when isnull(trim(t1.U_BZ_TRANSPORTISTA),'')<>'' then trim(t1.U_BZ_TRANSPORTISTA) end,
+		U_BPP_MDFN = case when isnull(trim(t1.U_BPP_MDFN),'')<>'' then trim(t1.U_BPP_MDFN) end,
+		--U_BC_ApeCond = case when isnull(trim(t1.U_BC_ApeCond),'')<>'' then t1.U_BC_ApeCond end,
+		--U_BC_NroDocConduc = case when isnull(trim(t1.U_BC_NroDocConduc),'')<>'' then t1.U_BC_NroDocConduc end,
+		U_BPP_MDFC = case when isnull(trim(t1.U_BPP_MDFC),'')<>'' then trim(t1.U_BPP_MDFC) end,
+		--U_BC_TipoDocCond = case when isnull(trim(t1.U_BC_TipoDocCond),'')<>'' then t1.U_BC_TipoDocCond end,
+		--U_BC_TipoDocTransp = case when isnull(trim(t1.U_BC_TipoDocTransp),'')<>'' then t1.U_BC_TipoDocTransp end,
+		--U_tipoTransporte = case when isnull(trim(t1.U_tipoTransporte),'')<>'' then t1.U_tipoTransporte end,
+		--U_BZ_RESGUARDO = case when isnull(trim(t1.U_BZ_RESGUARDO),'')<>'' then t1.U_BZ_RESGUARDO end,
+		U_BC_CHEKPACKING = case when isnull(trim(t1.U_BC_CHEKPACKING),'')<>'' then trim(t1.U_BC_CHEKPACKING) end,
+		U_BZ_HICITA = case when isnull(trim(t1.U_BZ_HICITA),'')<>'' then trim(t1.U_BZ_HICITA) end,
+		U_BZ_HFCITA = case when isnull(trim(t1.U_BZ_HFCITA),'')<>'' then trim(t1.U_BZ_HFCITA) end,
+		U_TIPO_DESPA = case when isnull(trim(t1.U_TIPO_DESPA),'')<>'' then trim(t1.U_TIPO_DESPA) end,
+		U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then trim(t1.U_BZ_FCHEMB) end,
+		U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then trim(t1.U_BZ_FFINAL) end,
+		U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then trim(t1.U_SC_HORAS_ADIC) end
+		from SBO_DERMO_BC.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_DESPACHO t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
 		where t1.Sociedad = @Sociedad and t1.HostGroupid = @Hostgroupid
 	end
 	--insert into "@EX_FILE" (Code,U_EX_RUTA,Prefix,Extent,Separator,[Order],State,Destino,Type,SAttribute) values(999,160,'SAP_HOST_DESPACHO',NULL,NULL,NULL,0,'SAP_HOST_DESPACHO',NULL,'exec EP_INSERTAR_CEVA_DELIVERY @@HGUI ')
@@ -402,53 +443,103 @@ select @tipo tipo,@titulo titulo,@mensaje mensaje
 end
 go
 
-IF EXISTS (SELECT * FROM sysobjects WHERE name='BZ_JEPM_ACTUALIZAR_LIQUIDACION_ORDR') 
+IF EXISTS (SELECT * FROM sysobjects WHERE name='BZ_JEPM_ACTUALIZAR_LIQUIDACION_ODLN') 
 BEGIN
-	drop procedure BZ_JEPM_ACTUALIZAR_LIQUIDACION_ORDR
+	drop procedure BZ_JEPM_ACTUALIZAR_LIQUIDACION_ODLN
 END
 go
-create PROCEDURE [dbo].[BZ_JEPM_ACTUALIZAR_LIQUIDACION_ORDR](@Sociedad varchar(100),@Hostgroupid varchar(25))
+create PROCEDURE [dbo].[BZ_JEPM_ACTUALIZAR_LIQUIDACION_ODLN](@Sociedad varchar(100),@Hostgroupid varchar(25))
 AS
 begin
 declare @tipo varchar(10)
 declare @titulo varchar(100)
 declare @mensaje varchar(max)
 begin try
-	begin transaction POST_Update_ORDR_Despacho
+	begin transaction POST_Update_ODLN_Liquidacion --SE CAMBIO DE ORDR A ODLN
 	if @Sociedad = 'SBO_SOLUM_BC'
 	begin
-		update ZZ_SOLUM_2804.dbo.ORDR set 
-		U_BZ_FCHEMB = case when isnull(t1.U_BZ_FCHEMB,'')<>'' then t1.U_BZ_FCHEMB end,
-		U_BZ_FFINAL = case when isnull(t1.U_BZ_FFINAL,'')<>'' then t1.U_BZ_FFINAL end,
-		U_SC_HORAS_ADIC = case when isnull(t1.U_SC_HORAS_ADIC,'')<>'' then t1.U_SC_HORAS_ADIC end,
-		U_BZ_TCKFEEN = case when isnull(t1.U_BZ_TCKFEEN,'')<>'' then t1.U_BZ_TCKFEEN end,
-		U_BZ_TCKHOEN = case when isnull(t1.U_BZ_TCKHOEN,'')<>'' then t1.U_BZ_TCKHOEN end,
-		U_BZ_TCKFELQ = case when isnull(t1.U_BZ_TCKFELQ,'')<>'' then t1.U_BZ_TCKFELQ end,
-		U_BZ_TCKHOLQ = case when isnull(t1.U_BZ_TCKHOLQ,'')<>'' then t1.U_BZ_TCKHOLQ end,
-		U_SL_FECHENVOF = case when isnull(t1.U_SL_FECHENVOF,'')<>'' then t1.U_SL_FECHENVOF end,
-		U_BZ_ISC = case when isnull(t1.U_BZ_ISC,'')<>'' then t1.U_BZ_ISC end
-		from ZZ_SOLUM_2804.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_LIQUIDACION t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
+		update SBO_SOLUM_BC.dbo.ODLN set 
+		U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then t1.U_BZ_FCHEMB else t0.U_BZ_FCHEMB end,
+		U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then t1.U_BZ_FFINAL else t0.U_BZ_FFINAL end,
+		U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then t1.U_SC_HORAS_ADIC else t0.U_SC_HORAS_ADIC end,
+		U_BZ_TCKFEEN = case when isnull(trim(t1.U_BZ_TCKFEEN),'')<>'' then t1.U_BZ_TCKFEEN else t0.U_BZ_TCKFEEN end,
+		U_BZ_TCKHOEN = case when isnull(trim(t1.U_BZ_TCKHOEN),'')<>'' then t1.U_BZ_TCKHOEN else t0.U_BZ_TCKHOEN end,
+		U_BZ_TCKFELQ = case when isnull(trim(t1.U_BZ_TCKFELQ),'')<>'' then t1.U_BZ_TCKFELQ else t0.U_BZ_TCKFELQ end,
+		U_BZ_TCKHOLQ = case when isnull(trim(t1.U_BZ_TCKHOLQ),'')<>'' then t1.U_BZ_TCKHOLQ else t0.U_BZ_TCKHOLQ end,
+		U_SL_FECHENVOF = case when isnull(trim(t1.U_SL_FECHENVOF),'')<>'' then t1.U_SL_FECHENVOF else t0.U_SL_FECHENVOF end,
+		U_BZ_ISC = case when isnull(trim(t1.U_BZ_ISC),'')<>'' then t1.U_BZ_ISC else t0.U_BZ_ISC end,
+		--
+		U_BZ_CARGA = case when isnull(trim(t1.U_BZ_CARGA),'')<>'' then t1.U_BZ_CARGA end,
+		U_BZ_TIPOVEH = case when isnull(trim(t1.U_BZ_TIPOVEH),'')<>'' then t1.U_BZ_TIPOVEH end,
+		U_BZ_SECPEDIDO = case when isnull(trim(t1.U_BZ_SECPEDIDO),'')<>'' then t1.U_BZ_SECPEDIDO end,
+		U_SYP_LUGAR_CARGA = case when isnull(trim(t1.U_SYP_LUGAR_CARGA),'')<>'' then t1.U_SYP_LUGAR_CARGA end,
+		U_BZ_NAVE = case when isnull(trim(t1.U_BZ_NAVE),'')<>'' then t1.U_BZ_NAVE end,
+		U_SYP_Ruta = case when isnull(trim(t1.U_SYP_Ruta),'')<>'' then t1.U_SYP_Ruta end,
+		U_BZ_PLACA = case when isnull(trim(t1.U_BZ_PLACA),'')<>'' then t1.U_BZ_PLACA end,
+		U_SL_RUCTRANSPORTISTA = case when isnull(trim(t1.U_SL_RUCTRANSPORTISTA),'')<>'' then t1.U_SL_RUCTRANSPORTISTA end,
+		U_BZ_TRANSPORTISTA = case when isnull(trim(t1.U_BZ_TRANSPORTISTA),'')<>'' then t1.U_BZ_TRANSPORTISTA end,
+		U_BPP_MDFN = case when isnull(trim(t1.U_BPP_MDFN),'')<>'' then t1.U_BPP_MDFN end,
+		U_BC_ApeCond = case when isnull(trim(t1.U_BC_ApeCond),'')<>'' then t1.U_BC_ApeCond end,
+		U_BC_NroDocConduc = case when isnull(trim(t1.U_BC_NroDocConduc),'')<>'' then t1.U_BC_NroDocConduc end,
+		U_BPP_MDFC = case when isnull(trim(t1.U_BPP_MDFC),'')<>'' then t1.U_BPP_MDFC end,
+		U_BC_TipoDocCond = case when isnull(trim(t1.U_BC_TipoDocCond),'')<>'' then t1.U_BC_TipoDocCond end,
+		U_BC_TipoDocTransp = case when isnull(trim(t1.U_BC_TipoDocTransp),'')<>'' then t1.U_BC_TipoDocTransp end,
+		U_tipoTransporte = case when isnull(trim(t1.U_tipoTransporte),'')<>'' then t1.U_tipoTransporte end,
+		U_BZ_RESGUARDO = case when isnull(trim(t1.U_BZ_RESGUARDO),'')<>'' then t1.U_BZ_RESGUARDO end,
+		U_BC_CHEKPACKING = case when isnull(trim(t1.U_BC_CHEKPACKING),'')<>'' then t1.U_BC_CHEKPACKING end,
+		U_BZ_HICITA = case when isnull(trim(t1.U_BZ_HICITA),'')<>'' then t1.U_BZ_HICITA end,
+		U_BZ_HFCITA = case when isnull(trim(t1.U_BZ_HFCITA),'')<>'' then t1.U_BZ_HFCITA end,
+		U_TIPO_DESPA = case when isnull(trim(t1.U_TIPO_DESPA),'')<>'' then t1.U_TIPO_DESPA end
+		--U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then t1.U_BZ_FCHEMB end,
+		--U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then t1.U_BZ_FFINAL end,
+		--U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then t1.U_SC_HORAS_ADIC end
+		from SBO_SOLUM_BC.dbo.ODLN t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_LIQUIDACION t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
 		where t1.Sociedad = @Sociedad and t1.HostGroupid = @Hostgroupid
 	end
 	else if @Sociedad = 'SBO_DERMO_BC'
 	begin
-		update ZZ_SOLUM_2804.dbo.ORDR set 
-		U_BZ_FCHEMB = case when isnull(t1.U_BZ_FCHEMB,'')<>'' then t1.U_BZ_FCHEMB end,
-		U_BZ_FFINAL = case when isnull(t1.U_BZ_FFINAL,'')<>'' then t1.U_BZ_FFINAL end,
-		U_SC_HORAS_ADIC = case when isnull(t1.U_SC_HORAS_ADIC,'')<>'' then t1.U_SC_HORAS_ADIC end,
-		U_BZ_TCKFEEN = case when isnull(t1.U_BZ_TCKFEEN,'')<>'' then t1.U_BZ_TCKFEEN end,
-		U_BZ_TCKHOEN = case when isnull(t1.U_BZ_TCKHOEN,'')<>'' then t1.U_BZ_TCKHOEN end,
-		U_BZ_TCKFELQ = case when isnull(t1.U_BZ_TCKFELQ,'')<>'' then t1.U_BZ_TCKFELQ end,
-		U_BZ_TCKHOLQ = case when isnull(t1.U_BZ_TCKHOLQ,'')<>'' then t1.U_BZ_TCKHOLQ end,
-		U_SL_FECHENVOF = case when isnull(t1.U_SL_FECHENVOF,'')<>'' then t1.U_SL_FECHENVOF end,
-		U_BZ_ISC = case when isnull(t1.U_BZ_ISC,'')<>'' then t1.U_BZ_ISC end
-		from ZZ_SOLUM_2804.dbo.ORDR t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_LIQUIDACION t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
+		update SBO_DERMO_BC.dbo.ODLN set 
+		U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then t1.U_BZ_FCHEMB else t0.U_BZ_FCHEMB end,
+		U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then t1.U_BZ_FFINAL else t0.U_BZ_FFINAL end,
+		U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then t1.U_SC_HORAS_ADIC else t0.U_SC_HORAS_ADIC end,
+		U_BZ_TCKFEEN = case when isnull(trim(t1.U_BZ_TCKFEEN),'')<>'' then t1.U_BZ_TCKFEEN else t0.U_BZ_TCKFEEN end,
+		U_BZ_TCKHOEN = case when isnull(trim(t1.U_BZ_TCKHOEN),'')<>'' then t1.U_BZ_TCKHOEN else t0.U_BZ_TCKHOEN end,
+		U_BZ_TCKFELQ = case when isnull(trim(t1.U_BZ_TCKFELQ),'')<>'' then t1.U_BZ_TCKFELQ else t0.U_BZ_TCKFELQ end,
+		U_BZ_TCKHOLQ = case when isnull(trim(t1.U_BZ_TCKHOLQ),'')<>'' then t1.U_BZ_TCKHOLQ else t0.U_BZ_TCKHOLQ end,
+		U_SL_FECHENVOF = case when isnull(trim(t1.U_SL_FECHENVOF),'')<>'' then t1.U_SL_FECHENVOF else t0.U_SL_FECHENVOF end,
+		U_BZ_ISC = case when isnull(trim(t1.U_BZ_ISC),'')<>'' then t1.U_BZ_ISC else t0.U_BZ_ISC end,
+		--
+		U_BZ_CARGA = case when isnull(trim(t1.U_BZ_CARGA),'')<>'' then t1.U_BZ_CARGA end,
+		U_BZ_TIPOVEH = case when isnull(trim(t1.U_BZ_TIPOVEH),'')<>'' then t1.U_BZ_TIPOVEH end,
+		U_BZ_SECPEDIDO = case when isnull(trim(t1.U_BZ_SECPEDIDO),'')<>'' then t1.U_BZ_SECPEDIDO end,
+		U_SYP_LUGAR_CARGA = case when isnull(trim(t1.U_SYP_LUGAR_CARGA),'')<>'' then t1.U_SYP_LUGAR_CARGA end,
+		U_BZ_NAVE = case when isnull(trim(t1.U_BZ_NAVE),'')<>'' then t1.U_BZ_NAVE end,
+		U_SYP_Ruta = case when isnull(trim(t1.U_SYP_Ruta),'')<>'' then t1.U_SYP_Ruta end,
+		U_BZ_PLACA = case when isnull(trim(t1.U_BZ_PLACA),'')<>'' then t1.U_BZ_PLACA end,
+		--U_SL_RUCTRANSPORTISTA = case when isnull(trim(t1.U_SL_RUCTRANSPORTISTA),'')<>'' then t1.U_SL_RUCTRANSPORTISTA end,
+		U_BZ_TRANSPORTISTA = case when isnull(trim(t1.U_BZ_TRANSPORTISTA),'')<>'' then t1.U_BZ_TRANSPORTISTA end,
+		U_BPP_MDFN = case when isnull(trim(t1.U_BPP_MDFN),'')<>'' then t1.U_BPP_MDFN end,
+		--U_BC_ApeCond = case when isnull(trim(t1.U_BC_ApeCond),'')<>'' then t1.U_BC_ApeCond end,
+		--U_BC_NroDocConduc = case when isnull(trim(t1.U_BC_NroDocConduc),'')<>'' then t1.U_BC_NroDocConduc end,
+		U_BPP_MDFC = case when isnull(trim(t1.U_BPP_MDFC),'')<>'' then t1.U_BPP_MDFC end,
+		--U_BC_TipoDocCond = case when isnull(trim(t1.U_BC_TipoDocCond),'')<>'' then t1.U_BC_TipoDocCond end,
+		--U_BC_TipoDocTransp = case when isnull(trim(t1.U_BC_TipoDocTransp),'')<>'' then t1.U_BC_TipoDocTransp end,
+		--U_tipoTransporte = case when isnull(trim(t1.U_tipoTransporte),'')<>'' then t1.U_tipoTransporte end,
+		--U_BZ_RESGUARDO = case when isnull(trim(t1.U_BZ_RESGUARDO),'')<>'' then t1.U_BZ_RESGUARDO end,
+		U_BC_CHEKPACKING = case when isnull(trim(t1.U_BC_CHEKPACKING),'')<>'' then t1.U_BC_CHEKPACKING end,
+		U_BZ_HICITA = case when isnull(trim(t1.U_BZ_HICITA),'')<>'' then t1.U_BZ_HICITA end,
+		U_BZ_HFCITA = case when isnull(trim(t1.U_BZ_HFCITA),'')<>'' then t1.U_BZ_HFCITA end,
+		U_TIPO_DESPA = case when isnull(trim(t1.U_TIPO_DESPA),'')<>'' then t1.U_TIPO_DESPA end
+		--U_BZ_FCHEMB = case when isnull(trim(t1.U_BZ_FCHEMB),'')<>'' then t1.U_BZ_FCHEMB end,
+		--U_BZ_FFINAL = case when isnull(trim(t1.U_BZ_FFINAL),'')<>'' then t1.U_BZ_FFINAL end,
+		--U_SC_HORAS_ADIC = case when isnull(trim(t1.U_SC_HORAS_ADIC),'')<>'' then t1.U_SC_HORAS_ADIC end
+		from SBO_DERMO_BC.dbo.ODLN t0 inner join SOLUM_EXPRESS.dbo.SAP_HOST_LIQUIDACION t1 on t0.DocNum = t1.DocEntry and t0.Series = t1.Series
 		where t1.Sociedad = @Sociedad and t1.HostGroupid = @Hostgroupid
 	end
 	set @tipo = 'success'
 	set @titulo = 'CORRECTO!!'
 	set @mensaje = 'REGISTRO CORRECTO.'
-	commit transaction POST_Update_ORDR_Despacho
+	commit transaction POST_Update_ODLN_Liquidacion
 end try
 begin catch
 	if @@TRANCOUNT > 0
@@ -456,7 +547,7 @@ begin catch
 		set @tipo = 'error'
 		set @titulo = 'ERROR!!'
 		set @mensaje = 'REGISTO INCORRECTO. ' + ERROR_MESSAGE() + ' OBJETO. ' + ERROR_PROCEDURE() + '. Error line: ' + cast(ERROR_LINE() AS NVARCHAR(6))
-		rollback transaction POST_Update_ORDR_Despacho
+		rollback transaction POST_Update_ODLN_Liquidacion
 	end
 end catch
 select @tipo tipo,@titulo titulo,@mensaje mensaje

@@ -370,7 +370,7 @@ namespace SolumInfraestructure.Domain.DBContext
                         //Lista de interfaces
                         if (destinatarios > 0)
                         {
-                            using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State = 1", conn))
+                            using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message,MessageSystem  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State = 0", conn))
                             {
                                 cmd_log.CommandTimeout = 300;
                                 conn.Open();
@@ -382,10 +382,13 @@ namespace SolumInfraestructure.Domain.DBContext
                                     //Environment.NewLine
                                     if (objRuta.Attached == true)
                                     {
-                                        //mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + Environment.NewLine;
+                                        mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + " " + rd_log.GetString(2) + Environment.NewLine;
                                         System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(0) + rd_log.GetString(1));
                                         mmsg.Attachments.Add(attachment);
                                         Console.WriteLine("   Archivo adjunto");
+                                    }
+                                    if (objResponse.Tipo == "error") {
+                                        mensaje = mensaje + rd_log.GetString(3) + Environment.NewLine;
                                     }
                                 }
                                 //
@@ -395,7 +398,7 @@ namespace SolumInfraestructure.Domain.DBContext
                                                                         Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
                                 }
                                 else if (objResponse.Tipo == "error") {
-                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con error" + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
+                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con error " + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
                                                                         Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
                                 }
                                 mmsg.BodyEncoding = System.Text.Encoding.UTF8;
@@ -586,6 +589,7 @@ namespace SolumInfraestructure.Domain.DBContext
                 //Console.WriteLine("Error al cargar los datos: " + ex.Message);
                 eResponseSql.Tipo = "error";
                 eResponseSql.Mensaje = "REGISTO INCORRECTO. " +  ex.Message;
+                eResponseSql.Notificar=true;
                 return eResponseSql;
             }
         }
