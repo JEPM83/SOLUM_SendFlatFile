@@ -370,7 +370,7 @@ namespace SolumInfraestructure.Domain.DBContext
                         //Lista de interfaces
                         if (destinatarios > 0)
                         {
-                            using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message,MessageSystem  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State = 0", conn))
+                            using (SqlCommand cmd_log = new SqlCommand("select isnull([Historic] ,'') , isnull(FileName,''),Message,MessageSystem,isnull(LogErr,''),State  from [@EX_LOG] where HostGroupId = '" + objParametros.hostgroupid + "' and State in (0,1)", conn))
                             {
                                 cmd_log.CommandTimeout = 300;
                                 conn.Open();
@@ -382,10 +382,24 @@ namespace SolumInfraestructure.Domain.DBContext
                                     //Environment.NewLine
                                     if (objRuta.Attached == true)
                                     {
-                                        mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + " " + rd_log.GetString(2) + Environment.NewLine;
-                                        System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(0) + rd_log.GetString(1));
-                                        mmsg.Attachments.Add(attachment);
-                                        Console.WriteLine("   Archivo adjunto");
+                                        if (Boolean.Parse(rd_log.GetValue(5).ToString()) == false)
+                                        {
+                                            if (System.IO.File.Exists(rd_log.GetString(4) + rd_log.GetString(1))) {
+                                                mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + " " + rd_log.GetString(2) + Environment.NewLine;
+                                                System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(4) + rd_log.GetString(1));
+                                                mmsg.Attachments.Add(attachment);
+                                                Console.WriteLine("   Archivo adjunto: " + rd_log.GetString(4) + rd_log.GetString(1));
+                                            }
+                                        }
+                                        else {
+                                            if (System.IO.File.Exists(rd_log.GetString(0) + rd_log.GetString(1)))
+                                            {
+                                                mensaje = mensaje + "ARCHIVO: " + rd_log.GetString(0) + rd_log.GetString(1) + "  MENSAJE: " + rd_log.GetString(2) + " " + rd_log.GetString(2) + Environment.NewLine;
+                                                System.Net.Mail.Attachment attachment = new System.Net.Mail.Attachment(rd_log.GetString(0) + rd_log.GetString(1));
+                                                mmsg.Attachments.Add(attachment);
+                                                Console.WriteLine("   Archivo adjunto: " + rd_log.GetString(0) + rd_log.GetString(1));
+                                            }
+                                        }
                                     }
                                     if (objResponse.Tipo == "error") {
                                         mensaje = mensaje + rd_log.GetString(3) + Environment.NewLine;
@@ -394,11 +408,11 @@ namespace SolumInfraestructure.Domain.DBContext
                                 //
                                 if (objResponse.Tipo == "success")
                                 {
-                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con éxito" + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
+                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador de PROCESO LOG: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con éxito" + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
                                                                         Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
                                 }
                                 else if (objResponse.Tipo == "error") {
-                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con error " + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
+                                    mmsg.Body = mensaje + Environment.NewLine + "Identificador de PROCESO LOG: " + objParametros.hostgroupid + Environment.NewLine + "Se ha procesado con error " + Environment.NewLine + "Sociedad: " + objParametros.sociedad +
                                                                         Environment.NewLine + "Cliente: " + objParametros.cliente + " (" + objParametros.nombre + ") ";
                                 }
                                 mmsg.BodyEncoding = System.Text.Encoding.UTF8;
